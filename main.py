@@ -76,26 +76,27 @@ from langgraph.checkpoint.memory import MemorySaver
 memory = MemorySaver()
 #Likely in production change this to SqliteSaver or PostgresSaver
 
-graph = graph_builder.compile(checkpointer=memory)
+graph = graph_builder.compile(
+    checkpointer=memory,
+    interrupt_before=["tools"],
+    )
 
+user_input = "I'm learning LangGraph. Could you do some research on it for me?"
 config = {"configurable": {"thread_id": "1"}}
-
-user_input = "Hi there! My name is Will."
-
 # The config is the **second positional argument** to stream() or invoke()!
 events = graph.stream(
     {"messages": [("user", user_input)]}, config, stream_mode="values"
 )
 for event in events:
-    event["messages"][-1].pretty_print()
+    if "messages" in event:
+        event["messages"][-1].pretty_print()
 
-user_input = "Remember my name?"
+snapshot = graph.get_state(config)
+print(snapshot.next)
 
-# The config is the **second positional argument** to stream() or invoke()!
-events = graph.stream(
-    {"messages": [("user", user_input)]}, config, stream_mode="values"
-)
+events = graph.stream(None, config, stream_mode="values")
 for event in events:
-    event["messages"][-1].pretty_print()
+    if "messages" in event:
+        event["messages"][-1].pretty_print()
 
 
